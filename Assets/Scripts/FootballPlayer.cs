@@ -39,7 +39,19 @@ public class FootballPlayer : MonoBehaviour
         }
         else
         {
-            TargetPosition();
+            Vector2 bestTarget = transform.position;
+            float bestScore = 0;
+            for (int i = 0; i < 5; i++)
+            {
+                Vector2 tryPosition = (Vector2)transform.position + new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f));
+                float objective = PositionObjectiveFunction(tryPosition, 0);
+                if (objective > bestScore)
+                {
+                    bestTarget = tryPosition;
+                    bestScore = objective;
+                }
+            }
+            target = bestTarget;
         }
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
         currentDirection = (target - (Vector2)transform.position).normalized;
@@ -79,6 +91,15 @@ public class FootballPlayer : MonoBehaviour
         }
     }
 
+    float PositionObjectiveFunction(Vector2 location, float plusTime = 0)
+    {
+        float distanceFromBall = (location - ball.FuturePosition(plusTime)).magnitude;
+        float playerCoverage = PlayerCoverageContribution(location, plusTime);
+        float teamCoverage = team.TeamPitchControl(location, plusTime);
+
+        return playerCoverage / distanceFromBall / teamCoverage;
+    }
+
     void KickBall(Ball ball)
     {
         if (ball != null)
@@ -93,11 +114,16 @@ public class FootballPlayer : MonoBehaviour
 
     float PlayerCoverageContribution(Vector2 location, float plusTime = 0)
     {
-        Rigidbody2D rb = GetComponent<Rigidbody2D>();
-        Vector2 futurePosition = transform.position + plusTime * rb.velocity; 
-        float playerCoverage = (Vector2)(transform.position - location).magnitude;
-        float teamCoverage = team.TeamCoverage(location);
+        Vector2 futurePosition = FuturePosition(plusTime);
+        float playerCoverage = ((Vector2)futurePosition - location).magnitude;
+        float teamCoverage = team.TeamCoverage(location, plusTime);
         return playerCoverage / teamCoverage;
+    }
+
+    public Vector2 FuturePosition(float plusTime = 0)
+    {
+        Rigidbody2D rb = GetComponent<Rigidbody2D>();
+        return (Vector2)transform.position + plusTime * (Vector2)rb.velocity;
     }
 
     bool IsClosestToBall()
@@ -108,7 +134,7 @@ public class FootballPlayer : MonoBehaviour
 
         foreach (var other in FindObjectsOfType<FootballPlayer>())
         {
-            if (other == this) continue;
+            if (other.team != team) continue;
 
             float otherDistSqr = ((Vector2)other.transform.position - ballPosition).sqrMagnitude;
             if (otherDistSqr < myDistSqr)

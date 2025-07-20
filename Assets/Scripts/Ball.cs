@@ -26,7 +26,13 @@ public class Ball : MonoBehaviour
 
     void Update()
     {
-        
+
+    }
+    
+    public Vector2 FuturePosition(float plusTime = 0)
+    {
+        Rigidbody2D rb = GetComponent<Rigidbody2D>();
+        return (Vector2)(transform.position) + plusTime * (Vector2)rb.velocity;
     }
 
 }
