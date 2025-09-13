@@ -9,10 +9,17 @@ public class OoBGoalLine : MonoBehaviour
             if (!other.GetComponent<Ball>().inGoal)
             {
                 other.GetComponent<Ball>().Reset();
+                FootballPlayer[] players = FindObjectsOfType<FootballPlayer>();
+
+                // Reset each one
+                foreach (FootballPlayer player in players)
+                {
+                    player.ResetPlayer();
+                }
             }
             else
             {
-                
+
             }
         }
     }

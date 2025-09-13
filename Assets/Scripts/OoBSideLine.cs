@@ -7,6 +7,13 @@ public class OoBSideLine : MonoBehaviour
         if (other.CompareTag("Ball")) // Ensure the Ball has the "Ball" tag
         {
             other.GetComponent<Ball>().Reset();
+            FootballPlayer[] players = FindObjectsOfType<FootballPlayer>();
+
+            // Reset each one
+            foreach (FootballPlayer player in players)
+            {
+                player.ResetPlayer();
+            }
         }
     }
 }
