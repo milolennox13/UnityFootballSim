@@ -76,6 +76,13 @@ public class FootballPlayer : MonoBehaviour
         }
     }
 
+    public void ResetPlayer()
+    {
+        transform.position = designatedPosition;
+        Rigidbody2D rb = GetComponent<Rigidbody2D>();
+        if (rb != null) rb.velocity = Vector2.zero;
+    }
+
     void TargetBall()
     {
         if (ball != null)

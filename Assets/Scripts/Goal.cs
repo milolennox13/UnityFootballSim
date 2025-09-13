@@ -13,14 +13,20 @@ public class Goal : MonoBehaviour
             if (team == 1)
             {
                 FindObjectOfType<ScoreManager>().AddPointToTeam2();
-                b.Reset();
-                b.inGoal = false;
             }
             else
             {
                 FindObjectOfType<ScoreManager>().AddPointToTeam1();
-                b.Reset();
-                b.inGoal = false;
+            }
+            b.Reset();
+            b.inGoal = false;
+
+            FootballPlayer[] players = FindObjectsOfType<FootballPlayer>();
+
+            // Reset each one
+            foreach (FootballPlayer player in players)
+            {
+                player.ResetPlayer();
             }
         }
     }
