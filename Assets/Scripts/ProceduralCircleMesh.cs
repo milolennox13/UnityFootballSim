@@ -1,60 +1,70 @@
 using UnityEngine;
 
-[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
-public class ProceduralCircleMesh : MonoBehaviour
+public static class ProceduralCircleMesh
 {
-    public float radius = 1f;
-    public float thickness = 0.1f;
-    public int segments = 64; // More segments = smoother circle
-    public float angleSpan = 360f; // Degrees (360 = full circle)
-
-    void Start()
-    {
-        GenerateCircleMesh();
-    }
-
-    void GenerateCircleMesh()
+    /// <summary>
+    /// Creates a ring mesh (circle outline) or arc between two angles.
+    /// </summary>
+    /// <param name="radius">Outer radius of the circle</param>
+    /// <param name="thickness">Stroke thickness (inner radius = radius - thickness)</param>
+    /// <param name="segments">Number of segments for smoothness</param>
+    /// <param name="startAngle">Start angle in degrees</param>
+    /// <param name="endAngle">End angle in degrees</param>
+    public static Mesh Generate(float radius, float thickness, int segments = 64, float startAngle = 0f, float endAngle = 360f)
     {
         Mesh mesh = new Mesh();
-        Vector3[] vertices = new Vector3[segments * 2 + 2];
-        int[] triangles = new int[segments * 6];
 
-        float angleStep = angleSpan / segments;
-        int vertIndex = 0;
-        int triIndex = 0;
+        float innerRadius = radius - thickness;
+        if (innerRadius < 0f) innerRadius = 0f;
 
-        for (int i = 0; i <= segments; i++)
+        // Normalize angle range
+        if (endAngle < startAngle)
+            endAngle += 360f;
+
+        float angleRange = endAngle - startAngle;
+        int steps = Mathf.Max(2, Mathf.CeilToInt(segments * (angleRange / 360f)));
+
+        Vector3[] vertices = new Vector3[steps * 2];
+        int[] triangles = new int[(steps - 1) * 6];
+        Vector2[] uv = new Vector2[vertices.Length];
+
+        for (int i = 0; i < steps; i++)
         {
-            float angle = Mathf.Deg2Rad * i * angleStep;
+            float t = (float)i / (steps - 1);
+            float angle = Mathf.Deg2Rad * (startAngle + t * angleRange);
             float cos = Mathf.Cos(angle);
             float sin = Mathf.Sin(angle);
 
-            // Outer and inner points
-            Vector3 outer = new Vector3(cos * radius, sin * radius, 0);
-            Vector3 inner = new Vector3(cos * (radius - thickness), sin * (radius - thickness), 0);
+            // Outer vertex
+            vertices[i * 2] = new Vector3(cos * radius, sin * radius, 0);
+            // Inner vertex
+            vertices[i * 2 + 1] = new Vector3(cos * innerRadius, sin * innerRadius, 0);
 
-            vertices[vertIndex++] = outer;
-            vertices[vertIndex++] = inner;
+            uv[i * 2] = new Vector2(t, 1);
+            uv[i * 2 + 1] = new Vector2(t, 0);
 
-            // Add triangles
-            if (i < segments)
+            // Build triangles
+            if (i < steps - 1)
             {
-                int start = i * 2;
-                triangles[triIndex++] = start;
-                triangles[triIndex++] = start + 1;
-                triangles[triIndex++] = start + 2;
+                int baseIndex = i * 6;
+                int vi = i * 2;
 
-                triangles[triIndex++] = start + 2;
-                triangles[triIndex++] = start + 1;
-                triangles[triIndex++] = start + 3;
+                triangles[baseIndex] = vi;
+                triangles[baseIndex + 1] = vi + 2;
+                triangles[baseIndex + 2] = vi + 1;
+
+                triangles[baseIndex + 3] = vi + 1;
+                triangles[baseIndex + 4] = vi + 2;
+                triangles[baseIndex + 5] = vi + 3;
             }
         }
 
         mesh.vertices = vertices;
         mesh.triangles = triangles;
+        mesh.uv = uv;
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
 
-        GetComponent<MeshFilter>().mesh = mesh;
+        return mesh;
     }
 }

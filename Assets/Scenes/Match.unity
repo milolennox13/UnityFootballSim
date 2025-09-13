@@ -231,6 +231,7 @@ MonoBehaviour:
   target: {x: 0, y: 0}
   designatedPosition: {x: -3, y: 0}
   team: {fileID: 1609416560}
+  objCoefficients: {x: 0, y: 2, z: 0, w: 1}
 --- !u!114 &77814086
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -753,11 +754,12 @@ MonoBehaviour:
   maxSpeed: 1
   maxAcc: 1
   maxShotPower: 1
-  ballAggression: 0.5
+  ballAggression: 0.25
   shotAccuracy: 1
   target: {x: 0, y: 0}
   designatedPosition: {x: 3, y: 0}
   team: {fileID: 849097014}
+  objCoefficients: {x: 0, y: 2, z: 1, w: 1}
 --- !u!114 &707480596
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1112,11 +1114,12 @@ MonoBehaviour:
   maxSpeed: 1
   maxAcc: 1
   maxShotPower: 1
-  ballAggression: 0.5
+  ballAggression: 0.25
   shotAccuracy: 1
   target: {x: 0, y: 0}
   designatedPosition: {x: 3, y: 1}
   team: {fileID: 849097014}
+  objCoefficients: {x: 0, y: 2, z: 1, w: 1}
 --- !u!114 &956709687
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1296,11 +1299,12 @@ MonoBehaviour:
   maxSpeed: 1
   maxAcc: 1
   maxShotPower: 1
-  ballAggression: 0.5
+  ballAggression: 0.25
   shotAccuracy: 1
   target: {x: 0, y: 0}
   designatedPosition: {x: 3, y: -1}
   team: {fileID: 849097014}
+  objCoefficients: {x: 0, y: 2, z: 1, w: 1}
 --- !u!114 &957052060
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1485,6 +1489,7 @@ MonoBehaviour:
   target: {x: 0, y: 0}
   designatedPosition: {x: -3, y: -1}
   team: {fileID: 1609416560}
+  objCoefficients: {x: 0, y: 2, z: 0, w: 1}
 --- !u!114 &1308890117
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1885,6 +1890,7 @@ MonoBehaviour:
   target: {x: 0, y: 0}
   designatedPosition: {x: -3, y: 1}
   team: {fileID: 1609416560}
+  objCoefficients: {x: 0, y: 2, z: 0, w: 1}
 --- !u!114 &1732649154
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2111,7 +2117,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   grassSprite: {fileID: 21300000, guid: 7c2936d774bbad64bb3e5b719776ec74, type: 3}
   whiteSprite: {fileID: 21300000, guid: 028728bf144fa9c4bbcd221ac39f4698, type: 3}
-  dimensions: {x: 120, y: 60}
+  pitchWhiteMaterial: {fileID: 2100000, guid: db50bd485b13edd4f920b0f78d565689, type: 2}
+  dimensions: {x: 115, y: 74}
   outOfBoundsWidth: 20
   goalDimensions: {x: 4, y: 8}
   whitePaintThickness: 0.2

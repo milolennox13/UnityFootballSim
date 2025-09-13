@@ -7,12 +7,13 @@ public class FootballPlayer : MonoBehaviour
     public float maxShotPower;
     public float ballAggression;
     public float shotAccuracy;
-    public Vector2 target;
+    public Vector2 target = new Vector2(0f, 0f);
     public Vector2 designatedPosition;
     public Team team;
     private float currentSpeed;
     private Vector2 currentDirection;
     private Ball ball;
+    public Vector4 objCoefficients = new Vector4(1f, 1f, 1f, 1f);
 
     public Vector3 GetPosition()
     {
@@ -39,8 +40,8 @@ public class FootballPlayer : MonoBehaviour
         }
         else
         {
-            Vector2 bestTarget = transform.position;
-            float bestScore = 0;
+            Vector2 bestTarget = target;
+            float bestScore = PositionObjectiveFunction(target, 0);
             for (int i = 0; i < 5; i++)
             {
                 Vector2 tryPosition = (Vector2)transform.position + new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f));
@@ -93,11 +94,12 @@ public class FootballPlayer : MonoBehaviour
 
     float PositionObjectiveFunction(Vector2 location, float plusTime = 0)
     {
-        float distanceFromBall = (location - ball.FuturePosition(plusTime)).magnitude;
-        float playerCoverage = PlayerCoverageContribution(location, plusTime);
-        float teamCoverage = team.TeamPitchControl(location, plusTime);
+        float logDistanceFromBall = Mathf.Log((location - ball.FuturePosition(plusTime)).magnitude);
+        float logPlayerCoverage = Mathf.Log(PlayerCoverageContribution(location, plusTime));
+        float logTeamCoverage = Mathf.Log(team.TeamPitchControl(location, plusTime));
+        float logPlayerPosition = Mathf.Log((designatedPosition - FuturePosition(plusTime)).magnitude);
 
-        return playerCoverage / distanceFromBall / teamCoverage;
+        return objCoefficients[0] * logPlayerCoverage - objCoefficients[1] * logDistanceFromBall - objCoefficients[2] * logTeamCoverage - objCoefficients[3] * logPlayerPosition;
     }
 
     void KickBall(Ball ball)
