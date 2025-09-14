@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Linq;
 
 public class FootballPlayer : MonoBehaviour
 {
@@ -6,13 +7,15 @@ public class FootballPlayer : MonoBehaviour
     public float maxAcc;
     public float maxShotPower;
     public float ballAggression;
-    public float shotAccuracy;
+    public float kickAccuracy;
     public Vector2 target = new Vector2(0f, 0f);
     public Vector2 designatedPosition;
     public Team team;
     private float currentSpeed;
     private Vector2 currentDirection;
     private Ball ball;
+    private Pitch pitch;
+    private Vector2 shotTarget;
 
     [System.Serializable]
     public class PlayerTargetCoefficients
@@ -24,6 +27,14 @@ public class FootballPlayer : MonoBehaviour
     }
 
     public PlayerTargetCoefficients targetCoefficients;
+
+    [System.Serializable]
+    public class PlayerPassCoefficients
+    {
+        public float distanceFromBall;
+        public float distanceFromGoal;
+    }
+    public PlayerPassCoefficients passCoefficients;
 
     public Vector3 GetPosition()
     {
@@ -40,6 +51,12 @@ public class FootballPlayer : MonoBehaviour
         {
             Debug.LogError("No Ball object found in the scene!");
         }
+        pitch = FindObjectOfType<Pitch>();
+        if (pitch == null)
+        {
+            Debug.LogError("No Pitch object found in the scene!");
+        }
+        shotTarget = new Vector2(team.dir * 0.5f * pitch.dimensions[0] * pitch.yardScale, 0);
         currentSpeed = maxSpeed;
     }
     void FixedUpdate()
@@ -80,9 +97,14 @@ public class FootballPlayer : MonoBehaviour
         }
         if (Vector2.Distance(transform.position, ball.transform.position) < 0.25f)
         {
-            Pitch pitch = FindObjectOfType<Pitch>();
-            Vector2 shotTarget = new Vector2(team.dir * 0.5f * pitch.dimensions[0] * pitch.yardScale, 0);
-            Shoot(ball, shotTarget, maxShotPower);
+            if (Vector2.Distance(transform.position, shotTarget) < 10f)
+            {
+                Shoot();
+            }
+            else
+            {
+                Pass();
+            }
         }
     }
 
@@ -119,18 +141,6 @@ public class FootballPlayer : MonoBehaviour
         return targetCoefficients.playerCoverage * logPlayerCoverage - targetCoefficients.distanceFromBall * logDistanceFromBall - targetCoefficients.teamCoverage * logTeamCoverage - targetCoefficients.playerPosition * logPlayerPosition;
     }
 
-    void KickBall(Ball ball)
-    {
-        if (ball != null)
-        {
-            Rigidbody2D rb = ball.GetComponent<Rigidbody2D>();
-            float kickForce = maxShotPower;
-            Vector2 dir = Vector2.zero;
-            dir = new Vector2(Random.Range(0f, team.dir), Random.Range(-1f, 1f));
-            rb.AddForce(Random.Range(0f, 1f) * dir.normalized * kickForce, ForceMode2D.Impulse);
-        }
-    }
-
     float PlayerCoverageContribution(Vector2 location, float plusTime = 0)
     {
         Vector2 futurePosition = FuturePosition(plusTime);
@@ -164,17 +174,39 @@ public class FootballPlayer : MonoBehaviour
         return true;
     }
 
-    void Shoot(Ball ball, Vector2 shotTarget, float kickForce)
+    float EvaluatePassOption(Vector2 passerPosition, float plusTime = 0)
+    {
+        Vector2 futurePos = FuturePosition(plusTime);
+        float logDistanceFromBall = Mathf.Log((futurePos - (Vector2)ball.GetPosition()).magnitude);
+        float logDistanceFromGoal = Mathf.Log((futurePos - shotTarget).magnitude);
+        return -passCoefficients.distanceFromGoal * logDistanceFromGoal - passCoefficients.distanceFromBall * logDistanceFromBall;
+    }
+
+    void Kick(Vector2 kickTarget, float kickForce)
     {
         if (ball != null)
         {
             Rigidbody2D rb = ball.GetComponent<Rigidbody2D>();
-            Vector2 dir = Vector2.zero;
-            float angleInDegrees = Vector2.SignedAngle(Vector2.up, shotTarget - (Vector2)(transform.position));
-            float angleInRadians = angleInDegrees * Mathf.Deg2Rad;
-            angleInRadians += (1 / shotAccuracy) * Random.Range(-1f, 1f);
-            dir = new Vector2(-Mathf.Sin(angleInRadians), Mathf.Cos(angleInRadians));
-            rb.AddForce(dir.normalized * kickForce, ForceMode2D.Impulse);
+            Vector2 dir = (kickTarget - (Vector2)transform.position).normalized;
+            rb.AddForce(dir * kickForce, ForceMode2D.Impulse);
         }
+    }
+
+    void Shoot()
+    {
+        Pitch pitch = FindObjectOfType<Pitch>();
+        Vector2 shotTarget = new Vector2(team.dir * 0.5f * pitch.dimensions[0] * pitch.yardScale, 0);
+        Kick(shotTarget, maxShotPower);
+    }
+
+    void Pass(float plusTime = 0)
+    {
+        FootballPlayer[] teamPlayers = team.players;
+
+        FootballPlayer passTarget = teamPlayers
+            .OrderBy(p => p.EvaluatePassOption(transform.position, plusTime))
+            .First();
+
+        Kick(passTarget.FuturePosition(plusTime), maxShotPower);
     }
 }
