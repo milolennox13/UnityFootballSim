@@ -13,7 +13,17 @@ public class FootballPlayer : MonoBehaviour
     private float currentSpeed;
     private Vector2 currentDirection;
     private Ball ball;
-    public Vector4 objCoefficients = new Vector4(1f, 1f, 1f, 1f);
+
+    [System.Serializable]
+    public class PlayerTargetCoefficients
+    {
+        public float playerCoverage;
+        public float distanceFromBall;
+        public float teamCoverage;
+        public float playerPosition;
+    }
+
+    public PlayerTargetCoefficients targetCoefficients;
 
     public Vector3 GetPosition()
     {
@@ -106,7 +116,7 @@ public class FootballPlayer : MonoBehaviour
         float logTeamCoverage = Mathf.Log(team.TeamPitchControl(location, plusTime));
         float logPlayerPosition = Mathf.Log((designatedPosition - FuturePosition(plusTime)).magnitude);
 
-        return objCoefficients[0] * logPlayerCoverage - objCoefficients[1] * logDistanceFromBall - objCoefficients[2] * logTeamCoverage - objCoefficients[3] * logPlayerPosition;
+        return targetCoefficients.playerCoverage * logPlayerCoverage - targetCoefficients.distanceFromBall * logDistanceFromBall - targetCoefficients.teamCoverage * logTeamCoverage - targetCoefficients.playerPosition * logPlayerPosition;
     }
 
     void KickBall(Ball ball)

@@ -122,7 +122,11 @@ MonoBehaviour:
   target: {x: 0, y: 0}
   designatedPosition: {x: -3, y: 0}
   team: {fileID: 0}
-  objCoefficients: {x: 0, y: 2, z: 1, w: 1}
+  targetCoefficients:
+    playerCoverage: 1
+    distanceFromBall: 1
+    teamCoverage: 2
+    playerPosition: 2
 --- !u!58 &353344738429687809
 CircleCollider2D:
   m_ObjectHideFlags: 0
