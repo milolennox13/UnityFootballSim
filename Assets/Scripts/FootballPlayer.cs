@@ -8,6 +8,7 @@ public class FootballPlayer : MonoBehaviour
     public float maxShotPower;
     public float ballAggression;
     public float kickAccuracy;
+    public float playerPlusTime;
     public Vector2 target = new Vector2(0f, 0f);
     public Vector2 designatedPosition;
     public Team team;
@@ -61,26 +62,7 @@ public class FootballPlayer : MonoBehaviour
     }
     void FixedUpdate()
     {
-        if (IsClosestToBall())
-        {
-            TargetBall();
-        }
-        else
-        {
-            Vector2 bestTarget = target;
-            float bestScore = PositionObjectiveFunction(target, 0);
-            for (int i = 0; i < 5; i++)
-            {
-                Vector2 tryPosition = (Vector2)transform.position + new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f));
-                float objective = PositionObjectiveFunction(tryPosition, 0);
-                if (objective > bestScore)
-                {
-                    bestTarget = tryPosition;
-                    bestScore = objective;
-                }
-            }
-            target = bestTarget;
-        }
+        TargetPosition();
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
         currentDirection = (target - (Vector2)transform.position).normalized;
         Vector2 v = rb.velocity;
@@ -95,15 +77,15 @@ public class FootballPlayer : MonoBehaviour
         {
             rb.velocity = v + (desiredVelocity - v).normalized * frameAcc;
         }
-        if (Vector2.Distance(transform.position, ball.transform.position) < 0.25f)
+        if (Vector2.Distance(transform.position, ball.transform.position) < 0.2f)
         {
-            if (Vector2.Distance(transform.position, shotTarget) < 10f)
+            if (Vector2.Distance(transform.position, shotTarget) < 1.8f)
             {
                 Shoot();
             }
             else
             {
-                Pass();
+                Pass(playerPlusTime);
             }
         }
     }
@@ -113,22 +95,24 @@ public class FootballPlayer : MonoBehaviour
         transform.position = designatedPosition;
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
         if (rb != null) rb.velocity = Vector2.zero;
-    }
-
-    void TargetBall()
-    {
-        if (ball != null)
-        {
-            target = (Vector2)ball.GetPosition();
-        }
+        target = new Vector2(0f, 0f);
     }
 
     void TargetPosition()
     {
-        if (ball != null)
+        Vector2 bestTarget = target;
+        float bestScore = PositionObjectiveFunction(target, playerPlusTime);
+        for (int i = 0; i < 10; i++)
         {
-            target = ballAggression * (Vector2)ball.GetPosition() + (1 - ballAggression) * designatedPosition;
+            Vector2 tryPosition = (Vector2)transform.position + new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f));
+            float objective = PositionObjectiveFunction(tryPosition, playerPlusTime);
+            if (objective > bestScore)
+            {
+                bestTarget = tryPosition;
+                bestScore = objective;
+            }
         }
+        target = bestTarget;
     }
 
     float PositionObjectiveFunction(Vector2 location, float plusTime = 0)
@@ -194,8 +178,6 @@ public class FootballPlayer : MonoBehaviour
 
     void Shoot()
     {
-        Pitch pitch = FindObjectOfType<Pitch>();
-        Vector2 shotTarget = new Vector2(team.dir * 0.5f * pitch.dimensions[0] * pitch.yardScale, 0);
         Kick(shotTarget, maxShotPower);
     }
 

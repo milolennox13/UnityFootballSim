@@ -114,19 +114,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f31ca5d951a58d44af3d13af50e9cbe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxSpeed: 1
-  maxAcc: 1
-  maxShotPower: 1
-  ballAggression: 0.05
-  shotAccuracy: 1
+  maxSpeed: 0.6
+  maxAcc: 0.3
+  maxShotPower: 0.5
+  ballAggression: 0
+  kickAccuracy: 0
+  playerPlusTime: 0
   target: {x: 0, y: 0}
   designatedPosition: {x: -3, y: 0}
   team: {fileID: 0}
   targetCoefficients:
     playerCoverage: 1
+    distanceFromBall: 0.5
+    teamCoverage: 1
+    playerPosition: 1
+  passCoefficients:
     distanceFromBall: 1
-    teamCoverage: 2
-    playerPosition: 2
+    distanceFromGoal: 1
 --- !u!58 &353344738429687809
 CircleCollider2D:
   m_ObjectHideFlags: 0
