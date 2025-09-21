@@ -501,16 +501,9 @@ MonoBehaviour:
   teamId: 0
   playerPrefab: {fileID: 2911918165842832764, guid: 990f33d060885a24f9e5db8cee395a84, type: 3}
   startingPositions:
-  - {x: 4, y: -2}
-  - {x: 4, y: -1}
-  - {x: 4, y: 1}
-  - {x: 4, y: 2}
   - {x: 3, y: -2}
-  - {x: 3, y: -1}
-  - {x: 3, y: 1}
+  - {x: 3, y: 0}
   - {x: 3, y: 2}
-  - {x: 2, y: -1}
-  - {x: 2, y: 1}
   players: []
 --- !u!4 &849097015
 Transform:
@@ -764,16 +757,9 @@ MonoBehaviour:
   teamId: 0
   playerPrefab: {fileID: 6751417349594231903, guid: c207b777c36326544acb8b3274109cf6, type: 3}
   startingPositions:
-  - {x: -4, y: -2}
-  - {x: -4, y: -1}
-  - {x: -4, y: 1}
-  - {x: -4, y: 2}
   - {x: -3, y: -2}
-  - {x: -3, y: -1}
-  - {x: -3, y: 1}
+  - {x: -3, y: 0}
   - {x: -3, y: 2}
-  - {x: -2, y: -1}
-  - {x: -2, y: 1}
   players: []
 --- !u!4 &1609416561
 Transform:

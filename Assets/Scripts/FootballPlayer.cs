@@ -17,12 +17,17 @@ public class FootballPlayer : MonoBehaviour
     private Ball ball;
     private Pitch pitch;
     private Vector2 shotTarget;
+    private bool kicking;
+    private float kickTimer;
+    private Vector2 kickTarget;
+    private float kickForce;
 
     [System.Serializable]
     public class PlayerTargetCoefficients
     {
         public float playerCoverage;
         public float distanceFromBall;
+        public float distanceFromGoal;
         public float teamCoverage;
         public float playerPosition;
     }
@@ -77,7 +82,20 @@ public class FootballPlayer : MonoBehaviour
         {
             rb.velocity = v + (desiredVelocity - v).normalized * frameAcc;
         }
-        if (Vector2.Distance(transform.position, ball.transform.position) < 0.2f)
+        if (kicking)
+        {
+            kickTimer -= Time.deltaTime;
+            if (kickTimer < 0)
+            {
+                kicking = false;
+                float kickRange = ball.GetComponent<CircleCollider2D>().radius + 0.2f;
+                if (Vector2.Distance(transform.position, ball.transform.position) < kickRange)
+                {
+                    ExecuteKick();
+                }
+            }
+        }
+        else if (Vector2.Distance(transform.position, ball.transform.position) < ball.GetComponent<CircleCollider2D>().radius + 0.5f)
         {
             if (Vector2.Distance(transform.position, shotTarget) < 1.8f)
             {
@@ -88,6 +106,7 @@ public class FootballPlayer : MonoBehaviour
                 Pass(playerPlusTime);
             }
         }
+
     }
 
     public void ResetPlayer()
@@ -106,7 +125,7 @@ public class FootballPlayer : MonoBehaviour
         {
             Vector2 tryPosition = (Vector2)transform.position + new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f));
             float objective = PositionObjectiveFunction(tryPosition, playerPlusTime);
-            if (objective > bestScore)
+            if (objective < bestScore)
             {
                 bestTarget = tryPosition;
                 bestScore = objective;
@@ -118,11 +137,21 @@ public class FootballPlayer : MonoBehaviour
     float PositionObjectiveFunction(Vector2 location, float plusTime = 0)
     {
         float logDistanceFromBall = Mathf.Log((location - ball.FuturePosition(plusTime)).magnitude);
+        float logDistanceFromGoal = Mathf.Log((location - shotTarget).magnitude);
         float logPlayerCoverage = Mathf.Log(PlayerCoverageContribution(location, plusTime));
         float logTeamCoverage = Mathf.Log(team.TeamPitchControl(location, plusTime));
-        float logPlayerPosition = Mathf.Log((designatedPosition - FuturePosition(plusTime)).magnitude);
+        float logPlayerPosition = Mathf.Log((location - designatedPosition).magnitude);
 
-        return targetCoefficients.playerCoverage * logPlayerCoverage - targetCoefficients.distanceFromBall * logDistanceFromBall - targetCoefficients.teamCoverage * logTeamCoverage - targetCoefficients.playerPosition * logPlayerPosition;
+        return -targetCoefficients.playerCoverage * logPlayerCoverage + targetCoefficients.distanceFromBall * logDistanceFromBall + targetCoefficients.distanceFromGoal * logDistanceFromGoal + targetCoefficients.teamCoverage * logTeamCoverage + targetCoefficients.playerPosition * logPlayerPosition;
+    }
+
+    float DribbleObjectiveFunction(Vector2 location, float plusTime = 0)
+    {
+        float logDistanceFromBall = Mathf.Log((location - ball.FuturePosition(plusTime)).magnitude);
+        float logDistanceFromGoal = Mathf.Log((location - shotTarget).magnitude);
+        float logTeamCoverage = Mathf.Log(team.TeamPitchControl(location, plusTime));
+
+        return targetCoefficients.distanceFromBall * logDistanceFromBall + targetCoefficients.distanceFromGoal * logDistanceFromGoal - targetCoefficients.teamCoverage * logTeamCoverage;
     }
 
     float PlayerCoverageContribution(Vector2 location, float plusTime = 0)
@@ -163,10 +192,16 @@ public class FootballPlayer : MonoBehaviour
         Vector2 futurePos = FuturePosition(plusTime);
         float logDistanceFromBall = Mathf.Log((futurePos - (Vector2)ball.GetPosition()).magnitude);
         float logDistanceFromGoal = Mathf.Log((futurePos - shotTarget).magnitude);
-        return -passCoefficients.distanceFromGoal * logDistanceFromGoal - passCoefficients.distanceFromBall * logDistanceFromBall;
+        return passCoefficients.distanceFromGoal * logDistanceFromGoal + passCoefficients.distanceFromBall * logDistanceFromBall;
     }
 
-    void Kick(Vector2 kickTarget, float kickForce)
+    void PrepareKick()
+    {
+        kicking = true;
+        kickTimer = 0.5f * kickForce / maxShotPower;
+    }
+
+    void ExecuteKick()
     {
         if (ball != null)
         {
@@ -178,7 +213,9 @@ public class FootballPlayer : MonoBehaviour
 
     void Shoot()
     {
-        Kick(shotTarget, maxShotPower);
+        kickTarget = shotTarget;
+        kickForce = maxShotPower;
+        PrepareKick();
     }
 
     void Pass(float plusTime = 0)
@@ -189,6 +226,34 @@ public class FootballPlayer : MonoBehaviour
             .OrderBy(p => p.EvaluatePassOption(transform.position, plusTime))
             .First();
 
-        Kick(passTarget.FuturePosition(plusTime), maxShotPower);
+        if (passTarget == this)
+        {
+            Dribble(playerPlusTime);
+        }
+        else
+        {
+            kickTarget = passTarget.FuturePosition(plusTime);
+            kickForce = maxShotPower;
+            PrepareKick();
+        }
+    }
+
+    void Dribble(float plusTime = 0)
+    {
+        Vector2 bestTarget = target;
+        float bestScore = PositionObjectiveFunction(target, plusTime);
+        for (int i = 0; i < 10; i++)
+        {
+            Vector2 tryPosition = (Vector2)transform.position + new Vector2(0.5f * team.dir, 0) + new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f));
+            float objective = DribbleObjectiveFunction(tryPosition, plusTime);
+            if (objective < bestScore)
+            {
+                bestTarget = tryPosition;
+                bestScore = objective;
+            }
+        }
+        kickTarget = bestTarget;
+        kickForce = Mathf.Min(maxShotPower, 0.5f);
+        PrepareKick();
     }
 }
